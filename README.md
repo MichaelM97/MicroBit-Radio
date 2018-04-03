@@ -44,7 +44,7 @@ Hold Button A for a brief moment - a small line should appear
 Wait for a moment - a '>' symbol should appear, and the letter 'A' will appear on your other MicroBit
 ```
 ### Below is an image showing all possible morse code messages
-![alt text](https://upload.wikimedia.org/wikipedia/commons/b/b5/International_Morse_Code.svg)
+![All possible Morse Code sequences](https://upload.wikimedia.org/wikipedia/commons/b/b5/International_Morse_Code.svg)
 ### 3. Whilst using the protocol, you will see some symbols appear. Below is a description of what each one means:
 ```
 . - You have just entered a Dot
@@ -54,15 +54,15 @@ Wait for a moment - a '>' symbol should appear, and the letter 'A' will appear o
 ? - You have entered an invalid morse sequence/invalid data has been recieved
 ```
 
-##Brief description of the Pairing sequence
+## Brief description of the Pairing sequence
 In order to reduce the amount of potential interference in a scenario where this
 protocol is deployed across more than 2 MicroBits, a simple pairing
-procedure has been implemented. First, the user must input the button sequence
-"ABB" into either MicroBit in order to initiate the pairing sequence.
+procedure has been implemented. First, the user must tap the 'B' button
+on either MicroBit in order to initiate the pairing sequence.
 This MicroBit will then generate 3 random numbers, these will be used to set the
 MicroBit Group, to set the Frequency Band, and as a unique key which will be
-addded to the start of each transmission. The user must then input the button
-sequence "BBA" into a seperate MicroBit within the 20 meter range, which will
+addded to the start of each transmission. The user must then hold the 'B' button
+on a seperate MicroBit within the 20 meter range, which will
 cause this MicroBit to store these numbers and be paired to the originally
 selected MicroBit. A confirmation signal will be sent so that both MicroBits are
 ready to recieve morse code transmissions from their paired MicroBit.
@@ -80,4 +80,4 @@ the left in the map, in order to find the correct letter the user originally
 intended on displaying.
 
 ## State Diagram
-![alt text](/State Diagram.png)
+![If image does not display correctly, it can be found in the root of the repository](/State Diagram.png)

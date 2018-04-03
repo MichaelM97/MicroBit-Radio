@@ -16,11 +16,17 @@
 #define DOT_TIME 250
 #define DASH_TIME 500
 
+//Flags used to track pairing status
+bool pairingStarted, paired;
+
+//Variables used for pairing
+int newGroup, newFrequency, key;
+
 using namespace std;
 
-/* Sends the passed morse code transmission (not in morse class as there
-were issues with handling pin events) */
-void sendTransmission(string transmissionBuffer);
+/* Function Prototypes */
+//Starts the pairing procedure
+void pairingStart(MicroBitEvent e);
 
 //Used to access microbit
 MicroBit uBit;
@@ -32,16 +38,15 @@ MicroBitImage DASH_IMAGE("0,0,0,0,0\n0,0,0,0,0\n0,255,255,255,0\n0,0,0,0,0\n0,0,
 //Button events
 MicroBitButton buttonA(MICROBIT_PIN_BUTTON_A, MICROBIT_ID_BUTTON_A);
 
-//Pin events
-MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_ALL);
-
 int main()
 {
-    //Initialise the micro:bit runtime.
+    //Initialise the micro:bit runtime and radio
     uBit.init();
+    uBit.radio.enable();
 
-    //Create instance of class
+    //Create instance of classes
     MorseClass* morse = new MorseClass();
+    PairingClass* pairing = new PairingClass();
 
     //Variables
     bool buttonPressed = false, incomingSignal = false;
@@ -49,6 +54,43 @@ int main()
       signalTime, signalDuration, signalWaiting = 0;
     string transmissionBuffer;
     char letter;
+
+    //Set flags
+    paired = false;
+    pairingStarted = false;
+
+    //Handle pairing procedure
+    while (paired == false) {
+
+      //Listen for button press or radio data
+      uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, pairingStart);
+      uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
+
+      /** HANDLE START PAIRING **/
+      if (pairingStart == true) {
+        //Get new random variables
+        newGroup = pairing.randomInt(0, 255, uBit.systemTime());
+        newFrequency = pairing.randomInt(0, 100, uBit.systemTime());
+        key = pairing.randomInt(0, 100, uBit.systemTime());
+
+        //Send variables across radio
+        ManagedString randomNums = newGroup.str() + "." + newFrequency.str() + "." + key.str();
+        uBit.radio.datagram.send(randomNums);
+        pairingStart = false;
+
+        //Wait for confirmation
+        uint64_t startedWaiting = uBit.systemTime();
+        while (1) {
+          uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onConfirm);
+          if (paired == true) {
+            uBit.display.scroll("PAIRED");
+            break;
+          } else if ((uBit.systemTime() - startedWaiting) > 10000) {
+            uBit.display.scroll("ERROR");
+          }
+        }
+      }
+    }
 
     //Main infinite loop
     while (1) {
@@ -104,7 +146,7 @@ int main()
           //Get morse code for new encrypted letter
           transmissionBuffer = morse->getMorse(letter);
           //Send morse code
-          sendTransmission(transmissionBuffer);
+          uBit.radio.datagram.send(key.str() + transmissionBuffer);
           uBit.display.printAsync(">");
           uBit.sleep(700);
           uBit.display.clear();
@@ -174,25 +216,21 @@ int main()
 
     //Delete class instances and go into power efficient sleep
     delete morse;
+    delete pairing;
     release_fiber();
 }
 
-void sendTransmission(string transmissionBuffer) {
-  //Store dots/dashes to be processed seperatley
-  int transmissionLength = transmissionBuffer.length();
-  char transmissionArray[transmissionLength + 1];
-  strcpy(transmissionArray, transmissionBuffer.c_str());
+void pairingStart(MicroBitEvent e) {
+	pairingStart = true;
+}
 
-  //Send morse code across wire attached to pin 1
-  for (int i = 0; i < transmissionLength; i++) {
-    if (transmissionArray[i] == '.') {
-      P1.setDigitalValue(1);
-      uBit.sleep(DOT_TIME);
-      P1.setDigitalValue(0);
-    } else if (transmissionArray[i] == '-') {
-      P1.setDigitalValue(1);
-      uBit.sleep(DASH_TIME);
-      P1.setDigitalValue(0);
-    }
+void onConfirm(MicroBitEvent e) {
+  ManagedString recievedData = uBit.radio.datagram.recv();
+  if (recievedData == "confirm") {
+    paired = true;
   }
+}
+
+void onFirstData(MicroBitEvent e) {
+  ManagedString recievedData = uBit.radio.datagram.recv();
 }

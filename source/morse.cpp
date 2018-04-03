@@ -6,7 +6,6 @@
  * Copyright: University of West of England 2018
  */
 
-#include "MicroBit.h"
 #include "morse.h"
 
 MorseClass::MorseClass() {

@@ -4,9 +4,6 @@
 #include <map>
 #include <string>
 
-//ENCRYPTION KEY
-#define ENCRYPTION_KEY 3
-
 using namespace std;
 
 class MorseClass {
