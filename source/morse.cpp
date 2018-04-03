@@ -1,7 +1,7 @@
 /**
  * File: morse.cpp
  * Author: Michael McCormick
- * Date: 09-03-2018
+ * Date: 03-04-2018
  * Desc: Contains functions related to manipulating morse code data
  * Copyright: University of West of England 2018
  */

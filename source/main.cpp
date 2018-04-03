@@ -1,9 +1,9 @@
 /**
  * File: main.cpp
  * Author: Michael McCormick
- * Date: 09-03-2018
- * Desc: Basic transmission/recieving protocol for morse code sent across 2
- * microbits connected via bluetooth. Implements a basic encryption cypher.
+ * Date: 03-04-2018
+ * Desc: Basic pairing & transmission protocol for morse code sent across 2
+ * microbits connected via the radio. Implements a basic encryption cypher.
  * Copyright: University of West of England 2018
  */
 #include "MicroBit.h"

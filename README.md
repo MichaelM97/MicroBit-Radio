@@ -34,6 +34,9 @@ cp build/bbc-microbit-classic-gcc/source/iot-example-combined.hex /media/[YOUR_U
 
 ## Using the protocol
 ### 1. Connect the two MicroBits to a suitable power source, and ensure both are within the 20 meter range
+
+### ADD PAIRING STEPS
+
 ### 2. You can now use either MicroBit to send a message to the other, to do this, simply enter a morse code message using Button A to send it. For example, if you wanted to send the letter 'A':
 ```
 Tap Button A - a small dot in the centre of the screen should appear
@@ -52,17 +55,17 @@ Wait for a moment - a '>' symbol should appear, and the letter 'A' will appear o
 ```
 
 ##Brief description of the Pairing sequence
-In order to pair the two seperate MicroBits - so that they only accept sent data
-from each other - a simple pairing procedure has been implemented. First, the
-user must input the button sequence "ABB" into either MicroBit in order to
-initiate the pairing sequence. This MicroBit will then broadcast a predetermined
-key via the radio, the other MicroBit will recieve this key, where it will wait
-for a user input. If the user once again inputs the correct button sequence of
-"ABB", the MicroBit will then generate a random number sequence which totals to 50.
-This number sequence will be sent and recieved by the other MicroBit, where it
-will be checked (see if it totals to 50). If valid, the number sequence will then
-be used by both MicroBits as a key in every transmitted message, to ensure the
-data they are sending and recieving is coming from the correct source.
+In order to reduce the amount of potential interference in a scenario where this
+protocol is deployed across more than 2 MicroBits, a simple pairing
+procedure has been implemented. First, the user must input the button sequence
+"ABB" into either MicroBit in order to initiate the pairing sequence.
+This MicroBit will then generate 3 random numbers, these will be used to set the
+MicroBit Group, to set the Frequency Band, and as a unique key which will be
+addded to the start of each transmission. The user must then input the button
+sequence "BBA" into a seperate MicroBit within the 20 meter range, which will
+cause this MicroBit to store these numbers and be paired to the originally
+selected MicroBit. A confirmation signal will be sent so that both MicroBits are
+ready to recieve morse code transmissions from their paired MicroBit.
 
 ## Brief description of the Caeser cipher
 In order to simply encrypt the messages sent by the MicroBits, the protocol uses
