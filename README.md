@@ -1,42 +1,44 @@
-# IoT - Challenge 2
+# IoT - Challenge 3
 
 ## Contributers
 - Michael McCormick (15012271)
 - Jacob Davies (15012401)
 
 ## Protocol Description
-This basic protocol takes a Morse Code input from one BBC MicroBit, encrypts
-the output using a Caesar cipher, and then transports the signal across a
-single wire to another BBC MicroBit. It is then decrypted using the same cipher
+This protocol first starts with a pairing sequence, to ensure the users two
+MicroBits only communicate with eachother. Then will proceed to take multiple
+Morse Code inputs from one BBC MicroBit, encrypts
+the output using a Caesar cipher, and then transports the signal across the
+Radio to another BBC MicroBit. It is then decrypted using the same cipher
 and key, and the corresponding output is displayed to the user.
 The protocol is used by building and loading the same hex file onto two seperate
-MicroBits, connecting them via a single wire attached to Pin 1 on both devices,
-then using Button A to input some morse code; followed by viewing the output on
-the other MicroBit. Further details on this process can be seen below.
+MicroBits that are within 20 meters of each other, then using Button A to input
+some morse code; followed by viewing the output on the other MicroBit.
+Further details on this process can be seen below.
 
 ## Building and Loading the protocol
 ### 1. Clone this repository onto to your computer, and change directory into the folder:
 ```
-git clone https://gitlab.uwe.ac.uk/m2-mccormick/IoT-Challenge2.git
-cd [YOUR_FILE_PATH]/IoT-Challenge2
+git clone https://gitlab.uwe.ac.uk/m2-mccormick/IoT-Challenge3.git
+cd [YOUR_FILE_PATH]/IoT-Challenge3
 ```
 ### 2. Set the target for yotta, and build the .hex file
 ```
 yt target bbc-microbit-classic-gcc
 yt build
 ```
-### 3. Plug in your two MicroBits **one at a time**, and run the following command to load the .hex file onto the MicroBit
+### 3. Plug in your two MicroBits **one at a time**, and run the following command to load the .hex file onto each MicroBit
 ```
 cp build/bbc-microbit-classic-gcc/source/iot-example-combined.hex /media/[YOUR_USERNAME]/MICROBIT
 ```
 
 ## Using the protocol
-### 1. Connect the two MicroBits to a suitable power source, **then** connect your wire to Pin 1 on both MicroBits
+### 1. Connect the two MicroBits to a suitable power source, and ensure both are within the 20 meter range
 ### 2. You can now use either MicroBit to send a message to the other, to do this, simply enter a morse code message using Button A to send it. For example, if you wanted to send the letter 'A':
 ```
-Tap Button A - A small dot in the centre of the screen should appear
-Hold Button A for a brief moment - A small line should appear
-Wait for a moment - A '>' symbol should appear, and the letter 'A will appear on your other MicroBit'
+Tap Button A - a small dot in the centre of the screen should appear
+Hold Button A for a brief moment - a small line should appear
+Wait for a moment - a '>' symbol should appear, and the letter 'A' will appear on your other MicroBit
 ```
 ### Below is an image showing all possible morse code messages
 ![alt text](https://upload.wikimedia.org/wikipedia/commons/b/b5/International_Morse_Code.svg)
@@ -44,10 +46,23 @@ Wait for a moment - A '>' symbol should appear, and the letter 'A will appear on
 ```
 . - You have just entered a Dot
 - - You have just entered a Dash
-! - You held the button for too long (or your MicroBit button/pin input is recieving noise)
+! - You held the button for too long (or your MicroBit is recieving noise)
 > - Your message has been sent
-? - You have entered an invalid morse sequence
+? - You have entered an invalid morse sequence/invalid data has been recieved
 ```
+
+##Brief description of the Pairing sequence
+In order to pair the two seperate MicroBits - so that they only accept sent data
+from each other - a simple pairing procedure has been implemented. First, the
+user must input the button sequence "ABB" into either MicroBit in order to
+initiate the pairing sequence. This MicroBit will then broadcast a predetermined
+key via the radio, the other MicroBit will recieve this key, where it will wait
+for a user input. If the user once again inputs the correct button sequence of
+"ABB", the MicroBit will then generate a random number sequence which totals to 50.
+This number sequence will be sent and recieved by the other MicroBit, where it
+will be checked (see if it totals to 50). If valid, the number sequence will then
+be used by both MicroBits as a key in every transmitted message, to ensure the
+data they are sending and recieving is coming from the correct source.
 
 ## Brief description of the Caeser cipher
 In order to simply encrypt the messages sent by the MicroBits, the protocol uses

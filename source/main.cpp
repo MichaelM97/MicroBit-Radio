@@ -3,7 +3,7 @@
  * Author: Michael McCormick
  * Date: 09-03-2018
  * Desc: Basic transmission/recieving protocol for morse code sent across 2
- * microbits connected via wires. Implements a basic encryption cypher.
+ * microbits connected via bluetooth. Implements a basic encryption cypher.
  * Copyright: University of West of England 2018
  */
 #include "MicroBit.h"
