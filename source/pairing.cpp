@@ -6,14 +6,24 @@
  * Copyright: University of West of England 2018
  */
 
- #include "pairing.h"
+#include "pairing.h"
 
- PairingClass::PairingClass() {
-   //Constructor
- }
+PairingClass::PairingClass() {
+ //Constructor
+}
 
- int PairingClass::randomInt(int min, int max, uint64_t sysTime) {
-   srand(sysTime); // Set random seed
-   int returnVar = rand() % max + min; // Generate random number
-   return returnVar;
- }
+int PairingClass::randomInt(int min, int max, uint64_t sysTime) {
+ srand(sysTime); // Set random seed
+ int returnVar = rand() % max + min; // Generate random number
+ return returnVar;
+}
+
+ManagedString PairingClass::pairingDataString(int newGroup, int newFrequency, const char * delimiter) {
+  //Convert variables to correct types
+  ManagedString newGroupStr = newGroup;
+  ManagedString newFrequencyStr = newFrequency;
+  ManagedString delimiterStr = delimiter;
+  //Concatenate variables
+  ManagedString returnVar = newGroupStr + delimiterStr + newFrequencyStr + delimiterStr;
+  return returnVar;
+}
