@@ -15,7 +15,7 @@ public:
   int randomInt(int min, int max, uint64_t sysTime);
   //Returns the ManagedString containing the pairing data to be sent
   ManagedString pairingDataString(int newGroup, int newFrequency, const char * delimiter);
-
+  
 };
 
 #endif

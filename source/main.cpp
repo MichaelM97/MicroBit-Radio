@@ -76,6 +76,7 @@ int main()
       //Listen for button press or radio data
       uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, pairingStart);
       uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
+      uBit.sleep(100);
 
       /** HANDLE START PAIRING **/
       if (pairingStarted == true) {
@@ -110,7 +111,7 @@ int main()
         uBit.radio.setFrequencyBand(newFrequency);
         uBit.display.scroll("PAIRED");
       }
-      uBit.sleep(10);
+      uBit.sleep(100);
     }
 
     //Main infinite loop
@@ -243,6 +244,7 @@ int main()
 
 void pairingStart(MicroBitEvent e) {
 	pairingStarted = true;
+  uBit.display.print("YH");
 }
 
 void onConfirm(MicroBitEvent e) {
