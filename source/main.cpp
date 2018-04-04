@@ -16,6 +16,12 @@
 #define DOT_TIME 250
 #define DASH_TIME 500
 
+//Variable that is sent/recieved to confirm pairing
+#define CONFIRM_MESSAGE "confirm"
+
+//Variable used for splitting pairing data string
+#define PAIR_DELIMITER ','
+
 //Flags used to track pairing status
 bool pairingStarted, paired;
 
@@ -61,7 +67,6 @@ int main()
 
     //Handle pairing procedure
     while (paired == false) {
-
       //Listen for button press or radio data
       uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, pairingStart);
       uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
@@ -71,10 +76,11 @@ int main()
         //Get new random variables
         newGroup = pairing.randomInt(0, 255, uBit.systemTime());
         newFrequency = pairing.randomInt(0, 100, uBit.systemTime());
-        key = pairing.randomInt(0, 100, uBit.systemTime());
+        key = pairing.randomInt(0, 500, uBit.systemTime());
 
-        //Send variables across radio
-        ManagedString randomNums = newGroup.str() + "." + newFrequency.str() + "." + key.str();
+        //Send variables across radio, merge using global delimiter
+        ManagedString randomNums = newGroup.str() + PAIR_DELIMITER +
+         newFrequency.str() + PAIR_DELIMITER + key.str() + PAIR_DELIMITER;
         uBit.radio.datagram.send(randomNums);
         pairingStart = false;
 
@@ -83,18 +89,24 @@ int main()
         while (1) {
           uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onConfirm);
           if (paired == true) {
-            uBit.display.scroll("PAIRED");
+            uBit.display.scroll("PAIRED"); //Will continue to MorseCode handling
             break;
           } else if ((uBit.systemTime() - startedWaiting) > 10000) {
-            uBit.display.scroll("ERROR");
+            uBit.display.scroll("ERROR"); //Will go back to listening for B press
+            break;
           }
         }
+      }
+
+      /** HANDLE COMPLETE PAIRING **/
+      if (paired == true) {
+        uBit.radio.setGroup(newGroup);
+        uBit.radio.setFrequencyBand(newFrequency);
       }
     }
 
     //Main infinite loop
     while (1) {
-
       //Update button up time
       buttonTime = uBit.systemTime();
 
@@ -211,7 +223,6 @@ int main()
         transmissionBuffer.clear();
         signalWaiting = 0;
       }
-
     }
 
     //Delete class instances and go into power efficient sleep
@@ -226,11 +237,26 @@ void pairingStart(MicroBitEvent e) {
 
 void onConfirm(MicroBitEvent e) {
   ManagedString recievedData = uBit.radio.datagram.recv();
-  if (recievedData == "confirm") {
+  if (recievedData == CONFIRM_MESSAGE) {
     paired = true;
   }
 }
 
 void onFirstData(MicroBitEvent e) {
-  ManagedString recievedData = uBit.radio.datagram.recv();
+  try {
+    ManagedString recievedData = uBit.radio.datagram.recv();
+    //Split incoming data, and store in variables
+    newGroup = strtok(recievedData,PAIR_DELIMITER);
+    newFrequency = strtok(recievedData,PAIR_DELIMITER);
+    key = strtok(recievedData,PAIR_DELIMITER);
+    //Send confirm message and update pairing status
+    uBit.radio.datagram.send(CONFIRM_MESSAGE);
+    paired = true;
+  } catch (...) {
+    /*
+      There was an error with handling the data, therefore recieved transmission
+      was not sent from this matching protocol
+    */
+    paired = false;
+  }
 }

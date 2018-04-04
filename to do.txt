@@ -1,0 +1,6 @@
+Need to add prototypes for onConfirm and onFirstData functions 
+
+onFirstData function --
+- split the string by .'s 
+- use try catch when storing the split values as strings (check for valid ints and if variables have data)
+- send confirm message and store num values on both MicroBits
