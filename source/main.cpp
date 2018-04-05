@@ -8,7 +8,6 @@
  */
 #include "MicroBit.h"
 #include "morse.h"
-#include "pairing.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
@@ -27,9 +26,6 @@
 //Flags used to track pairing status
 bool pairingStarted, paired;
 
-//Variables used for pairing
-int newGroup, newFrequency;
-
 using namespace std;
 
 /* Function Prototypes */
@@ -39,6 +35,10 @@ void pairingStart(MicroBitEvent e);
 void onConfirm(MicroBitEvent e);
 //Stores new pairing variables and sends confirmation message
 void onFirstData(MicroBitEvent e);
+//Generates a random number between min - max
+int randomInt(int min, int max);
+//Returns the ManagedString containing the pairing data to be sent
+ManagedString pairingDataString(int newGroup, int newFrequency);
 
 //Used to access microbit
 MicroBit uBit;
@@ -58,7 +58,6 @@ int main()
 
     //Create instance of classes
     MorseClass* morse = new MorseClass();
-    PairingClass* pairing = new PairingClass();
 
     //Variables
     bool buttonPressed = false, incomingSignal = false;
@@ -66,6 +65,7 @@ int main()
       signalTime, signalDuration, signalWaiting = 0;
     char * transmissionBuffer;
     char letter;
+    int newGroup, newFrequency; //Variables used for pairing
 
     //Set flags
     paired = false;
@@ -83,11 +83,11 @@ int main()
         uBit.display.scrollAsync("PAIRING");
 
         //Get new random variables
-        newGroup = pairing->randomInt(0, 255, uBit.systemTime());
-        newFrequency = pairing->randomInt(0, 100, uBit.systemTime());
+        newGroup = randomInt(0, 255);
+        newFrequency = randomInt(0, 100);
 
         //Send variables across radio, merge using global delimiter
-        ManagedString randomNums = pairing->pairingDataString(newGroup, newFrequency, PAIR_DELIMITER);
+        ManagedString randomNums = pairingDataString(newGroup, newFrequency);
         uBit.radio.datagram.send(randomNums);
         pairingStarted = false;
 
@@ -275,4 +275,20 @@ void onFirstData(MicroBitEvent e) {
     */
   //  paired = false;
 //  }
+}
+
+int randomInt(int min, int max) {
+ srand(uBit.systemTime()); //Use current system up time as random seed
+ int returnVar = rand() % max + min; //Generate random number
+ return returnVar;
+}
+
+ManagedString pairingDataString(int newGroup, int newFrequency) {
+  //Convert variables to correct types
+  ManagedString newGroupStr = newGroup;
+  ManagedString newFrequencyStr = newFrequency;
+  ManagedString delimiterStr = PAIR_DELIMITER;
+  //Concatenate variables
+  ManagedString returnVar = newGroupStr + delimiterStr + newFrequencyStr + delimiterStr;
+  return returnVar;
 }
