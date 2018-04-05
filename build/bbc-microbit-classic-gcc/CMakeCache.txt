@@ -23,6 +23,12 @@ ARM_NONE_EABI_GPP:FILEPATH=/usr/bin/arm-none-eabi-g++
 //Path to a program.
 ARM_NONE_EABI_OBJCOPY:FILEPATH=/usr/bin/arm-none-eabi-objcopy
 
+//Path to a program.
+CMAKE_AR:FILEPATH=/usr/bin/arm-none-eabi-ar
+
+//The ASM compiler
+CMAKE_ASM_COMPILER:FILEPATH=/usr/bin/arm-none-eabi-gcc
+
 //Flags used by the assembler during all build types.
 CMAKE_ASM_FLAGS:STRING= -fno-exceptions -fno-unwind-tables -x assembler-with-cpp -mcpu=cortex-m0 -mthumb -D__thumb2__
 
@@ -75,7 +81,7 @@ CMAKE_C_FLAGS_RELEASE:STRING=-Os -DNDEBUG
 CMAKE_C_FLAGS_RELWITHDEBINFO:STRING=-Os -g -gdwarf-3 -DNDEBUG
 
 //Flags used by the linker.
-CMAKE_EXE_LINKER_FLAGS:STRING=-fno-exceptions -fno-unwind-tables -Wl,--gc-sections -Wl,--sort-common -Wl,--sort-section=alignment -Wl,-wrap,main -mcpu=cortex-m0 -mthumb -T"/home/student/IoT-Challenge2/yotta_targets/bbc-microbit-classic-gcc/CMake/../ld/NRF51822.ld"
+CMAKE_EXE_LINKER_FLAGS:STRING=-fno-exceptions -fno-unwind-tables -Wl,--gc-sections -Wl,--sort-common -Wl,--sort-section=alignment -Wl,-wrap,main -mcpu=cortex-m0 -mthumb -T"/home/student/IoT-Challenge3/yotta_targets/bbc-microbit-classic-gcc/CMake/../ld/NRF51822.ld"
 
 //Flags used by the linker during debug builds.
 CMAKE_EXE_LINKER_FLAGS_DEBUG:STRING=
@@ -95,6 +101,9 @@ CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=OFF
 //Install path prefix, prepended onto install directories.
 CMAKE_INSTALL_PREFIX:PATH=/usr/local
 
+//Path to a program.
+CMAKE_LINKER:FILEPATH=/usr/bin/arm-none-eabi-ld
+
 //Program used to build from build.ninja files.
 CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/ninja
 
@@ -113,8 +122,20 @@ CMAKE_MODULE_LINKER_FLAGS_RELEASE:STRING=
 //Flags used by the linker during Release with Debug Info builds.
 CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
+//Path to a program.
+CMAKE_NM:FILEPATH=/usr/bin/arm-none-eabi-nm
+
+//Path to a program.
+CMAKE_OBJCOPY:FILEPATH=/usr/bin/arm-none-eabi-objcopy
+
+//Path to a program.
+CMAKE_OBJDUMP:FILEPATH=/usr/bin/arm-none-eabi-objdump
+
 //Value Computed by CMake
 CMAKE_PROJECT_NAME:STATIC=iot-example
+
+//Path to a program.
+CMAKE_RANLIB:FILEPATH=/usr/bin/arm-none-eabi-ranlib
 
 //Flags used by the linker during the creation of dll's.
 CMAKE_SHARED_LINKER_FLAGS:STRING=
@@ -152,6 +173,12 @@ CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 
 //Flags used by the linker during Release with Debug Info builds.
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
+
+//Path to a program.
+CMAKE_STRIP:FILEPATH=/usr/bin/arm-none-eabi-strip
+
+//The CMake toolchain file
+CMAKE_TOOLCHAIN_FILE:FILEPATH=/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/toolchain.cmake
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -224,6 +251,11 @@ nrf51-sdk_SOURCE_DIR:STATIC=/home/student/IoT-Challenge3/build/bbc-microbit-clas
 # INTERNAL cache entries
 ########################
 
+//ADVANCED property for variable: CMAKE_AR
+CMAKE_AR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_ASM_COMPILER
+CMAKE_ASM_COMPILER-ADVANCED:INTERNAL=1
+CMAKE_ASM_COMPILER_WORKS:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ASM_FLAGS
 CMAKE_ASM_FLAGS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ASM_FLAGS_DEBUG
@@ -291,6 +323,8 @@ CMAKE_GENERATOR_TOOLSET:INTERNAL=
 //Source directory with the top level CMakeLists.txt file for this
 // project
 CMAKE_HOME_DIRECTORY:INTERNAL=/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc
+//ADVANCED property for variable: CMAKE_LINKER
+CMAKE_LINKER-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MAKE_PROGRAM
 CMAKE_MAKE_PROGRAM-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS
@@ -303,8 +337,16 @@ CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
 CMAKE_MODULE_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO
 CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_NM
+CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
 CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=14
+//ADVANCED property for variable: CMAKE_OBJCOPY
+CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_OBJDUMP
+CMAKE_OBJDUMP-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_RANLIB
+CMAKE_RANLIB-ADVANCED:INTERNAL=1
 //Path to CMake installation.
 CMAKE_ROOT:INTERNAL=/usr/share/cmake-3.5
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS
@@ -331,6 +373,10 @@ CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
 CMAKE_STATIC_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_STRIP
+CMAKE_STRIP-ADVANCED:INTERNAL=1
+//uname command
+CMAKE_UNAME:INTERNAL=/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 

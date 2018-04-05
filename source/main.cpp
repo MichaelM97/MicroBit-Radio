@@ -11,34 +11,35 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
-// #include <atlstr.h> //Used for ManagedString char array conversion
 
+/* Global constants */
 //Timings used for distinguishing between dot/dash transmissions
 #define DOT_TIME 250
 #define DASH_TIME 500
-
-//Variable that is sent/recieved to confirm pairing
+//Data that is sent/recieved to confirm pairing
 #define CONFIRM_MESSAGE "confirm"
-
-//Variable used for splitting pairing data string
+//Character used for splitting pairing data string
 #define PAIR_DELIMITER ","
-
-//Flags used to track pairing status
-bool pairingStarted, paired;
 
 using namespace std;
 
 /* Function Prototypes */
 //Starts the pairing procedure
-void pairingStart(MicroBitEvent e);
+void pairingStart(MicroBitEvent pairStart);
 //Checks if recieved data matches confirmation message
-void onConfirm(MicroBitEvent e);
+void onConfirm(MicroBitEvent confirmRecieved);
 //Stores new pairing variables and sends confirmation message
-void onFirstData(MicroBitEvent e);
+void onFirstData(MicroBitEvent firstData);
 //Generates a random number between min - max
 int randomInt(int min, int max);
 //Returns the ManagedString containing the pairing data to be sent
 ManagedString pairingDataString(int newGroup, int newFrequency);
+
+/* Global variables */
+//Flags used to track pairing status
+bool pairingStarted, paired;
+//Variables used for pairing
+int newGroup, newFrequency;
 
 //Used to access microbit
 MicroBit uBit;
@@ -50,23 +51,28 @@ MicroBitImage DASH_IMAGE("0,0,0,0,0\n0,0,0,0,0\n0,255,255,255,0\n0,0,0,0,0\n0,0,
 //Button events
 MicroBitButton buttonA(MICROBIT_PIN_BUTTON_A, MICROBIT_ID_BUTTON_A);
 
+//Pin events
+MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_ALL);
+
 int main()
 {
-    //Initialise the micro:bit runtime and radio
+    //Initialise the micro:bit runtime.
     uBit.init();
-    uBit.radio.enable();
-
+uBit.display.print(1);
     //Create instance of classes
     MorseClass* morse = new MorseClass();
+uBit.display.print(2);
+    //Initialise MicroBit radio
+    uBit.sleep(100);
 
+    uBit.sleep(100);
+uBit.display.print(3);
     //Variables
     bool buttonPressed = false, incomingSignal = false;
     uint64_t buttonTime, buttonDuration, buttonWaiting = 0,
       signalTime, signalDuration, signalWaiting = 0;
-    char * transmissionBuffer;
+    string transmissionBuffer;
     char letter;
-    int newGroup, newFrequency; //Variables used for pairing
-
     //Set flags
     paired = false;
     pairingStarted = false;
@@ -76,6 +82,8 @@ int main()
       //Listen for button press or radio data
       uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, pairingStart);
       uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
+      uBit.radio.enable();
+uBit.display.print(4);
       uBit.sleep(100);
 
       /** HANDLE START PAIRING **/
@@ -94,7 +102,8 @@ int main()
         //Wait for confirmation
         uint64_t startedWaiting = uBit.systemTime();
         while (1) {
-          uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onConfirm);
+          // uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onConfirm);
+          // uBit.radio.enable();
           if (paired == true) {
             //Will continue to MorseCode handling
             break;
@@ -165,10 +174,12 @@ int main()
           //Encrypt letter with Caeser cipher
           letter = morse->encrypt(letter);
           //Get morse code for new encrypted letter
-          string newMorse = morse->getMorse(letter);
-          strcpy(transmissionBuffer, newMorse.c_str());
+          transmissionBuffer = morse->getMorse(letter);
+          //Convert data to sendable type
+          char * data;
+          strcpy(data, transmissionBuffer.c_str());
+          ManagedString dataString = data;
           //Send morse code
-          ManagedString data(transmissionBuffer); //Convert to sendable type
           uBit.radio.datagram.send(data);
           uBit.display.printAsync(">");
           uBit.sleep(700);
@@ -179,82 +190,81 @@ int main()
           uBit.display.clear();
         }
         //Reset variables to allow for new transmissions
-        transmissionBuffer = {0};
+        transmissionBuffer.clear();
         buttonWaiting = 0;
       }
 
-      // /** HANDLE INCOMING MORSE **/
-      // //Update signal up time
-      // signalTime = uBit.systemTime();
-      //
-      // //Wait for signal from Pin 1
-      // while (P1.getDigitalValue() == 1) {
-      //   incomingSignal = true;
-      // }
-      //
-      // //Get the incoming signal duration
-      // signalDuration = uBit.systemTime() - signalTime;
-      //
-      // //Process incoming signal
-      // if (incomingSignal == true) {
-      //   //DOT input
-      //   if ((signalDuration > 100) && (signalDuration < 400)) {
-      //     transmissionBuffer += '.';
-      //   }
-      //   //DASH input
-      //   else if ((signalDuration > 400) && (signalDuration < 800)) {
-      //     transmissionBuffer += '-';
-      //   }
-      //   //NOISE
-      //   else if (signalDuration > 800) {
-      //     uBit.display.printAsync("!");
-      //     uBit.sleep(700);
-      //     uBit.display.clear();
-      //   }
-      //   //Reset variables to allow for new incoming signals
-      //   incomingSignal = false;
-      //   signalWaiting = uBit.systemTime();
-      //   //Update system up time
-      //   signalTime = uBit.systemTime();
-      // }
-      //
-      // //Incoming signal is finished if wait time met
-      // if (((signalTime - signalWaiting) > 2000) && (signalWaiting != 0)) {
-      //   //Get letter associated with morse signal
-      //   letter = morse->getLetter(transmissionBuffer);
-      //   if (letter != '?') { //Only if valid morse found
-      //     //Decrypt letter with Caeser cipher
-      //     letter = morse->decrypt(letter);
-      //   }
-      //   //Display letter to user
-      //   uBit.display.printAsync(letter);
-      //   uBit.sleep(700);
-      //   uBit.display.clear();
-      //   //Reset variables to allow for new transmissions
-      //   transmissionBuffer.clear();
-      //   signalWaiting = 0;
-      // }
+      /** HANDLE INCOMING MORSE **/
+      //Update signal up time
+      signalTime = uBit.systemTime();
+
+      //Wait for signal from Pin 1
+      while (P1.getDigitalValue() == 1) {
+        incomingSignal = true;
+      }
+
+      //Get the incoming signal duration
+      signalDuration = uBit.systemTime() - signalTime;
+
+      //Process incoming signal
+      if (incomingSignal == true) {
+        //DOT input
+        if ((signalDuration > 100) && (signalDuration < 400)) {
+          transmissionBuffer += '.';
+        }
+        //DASH input
+        else if ((signalDuration > 400) && (signalDuration < 800)) {
+          transmissionBuffer += '-';
+        }
+        //NOISE
+        else if (signalDuration > 800) {
+          uBit.display.printAsync("!");
+          uBit.sleep(700);
+          uBit.display.clear();
+        }
+        //Reset variables to allow for new incoming signals
+        incomingSignal = false;
+        signalWaiting = uBit.systemTime();
+        //Update system up time
+        signalTime = uBit.systemTime();
+      }
+
+      //Incoming signal is finished if wait time met
+      if (((signalTime - signalWaiting) > 2000) && (signalWaiting != 0)) {
+        //Get letter associated with morse signal
+        letter = morse->getLetter(transmissionBuffer);
+        if (letter != '?') { //Only if valid morse found
+          //Decrypt letter with Caeser cipher
+          letter = morse->decrypt(letter);
+        }
+        //Display letter to user
+        uBit.display.printAsync(letter);
+        uBit.sleep(700);
+        uBit.display.clear();
+        //Reset variables to allow for new transmissions
+        transmissionBuffer.clear();
+        signalWaiting = 0;
+      }
     }
 
     //Delete class instances and go into power efficient sleep
     delete morse;
-    delete pairing;
     release_fiber();
 }
 
-void pairingStart(MicroBitEvent e) {
+void pairingStart(MicroBitEvent pairStart) {
 	pairingStarted = true;
   uBit.display.print("YH");
 }
 
-void onConfirm(MicroBitEvent e) {
+void onConfirm(MicroBitEvent confirmRecieved) {
   ManagedString recievedData = uBit.radio.datagram.recv();
   if (recievedData == CONFIRM_MESSAGE) {
     paired = true;
   }
 }
 
-void onFirstData(MicroBitEvent e) {
+void onFirstData(MicroBitEvent firstData) {
 //  try {
     //Store transmission in correct data type
     ManagedString recievedData = uBit.radio.datagram.recv();
