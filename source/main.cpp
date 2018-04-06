@@ -57,8 +57,7 @@ MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_ALL);
 int main()
 {
     //Initialise the micro:bit runtime.
-    uBit.init();        
-    uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
+    uBit.init();
     uBit.radio.enable();
 
     //Create instance of classes
@@ -81,11 +80,12 @@ int main()
     while (paired == false) {
       //Listen for button press or radio data
       uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, pairingStart);
+      uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
       uBit.sleep(100);
 
       /** HANDLE START PAIRING **/
       if (pairingStarted == true) {
-        uBit.display.scrollAsync("PAIRING");
+        uBit.display.scroll("PAIRING");
 
         //Get new random variables
         newGroup = randomInt(0, 255);
@@ -100,8 +100,7 @@ int main()
         //Wait for confirmation
         uint64_t startedWaiting = uBit.systemTime();
         while (1) {
-          // uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onConfirm);
-          // uBit.radio.enable();
+          uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onConfirm);
           if (paired == true) {
             //Will continue to MorseCode handling
             break;
@@ -262,27 +261,18 @@ void onConfirm(MicroBitEvent confirmRecieved) {
 }
 
 void onFirstData(MicroBitEvent firstData) {
-//  try {
-    //Store transmission in correct data type
-    ManagedString recievedData = uBit.radio.datagram.recv();
-    uBit.display.print(recievedData);
-    char * dataString = (char *)recievedData.toCharArray();
-    char * temp;
-    //Split incoming data, and store in variables
-    temp = strtok(dataString,PAIR_DELIMITER);
-    newGroup = atoi(temp);
-    temp = strtok(dataString,PAIR_DELIMITER);
-    newFrequency = atoi(temp);
-    //Send confirm message and update pairing status
-    uBit.radio.datagram.send(CONFIRM_MESSAGE);
-    paired = true;
-//  } catch (...) {
-    /*
-      There was an error with handling the data, therefore recieved transmission
-      was not sent from this matching protocol
-    */
-  //  paired = false;
-//  }
+  //Store transmission in correct data type
+  ManagedString recievedData = uBit.radio.datagram.recv();
+  char * dataString = (char *)recievedData.toCharArray();
+  char * temp;
+  //Split incoming data, and store in variables
+  temp = strtok(dataString,PAIR_DELIMITER);
+  newGroup = atoi(temp);
+  temp = strtok(dataString,PAIR_DELIMITER);
+  newFrequency = atoi(temp);
+  //Send confirm message and update pairing status
+  uBit.radio.datagram.send(CONFIRM_MESSAGE);
+  paired = true;
 }
 
 int randomInt(int min, int max) {
