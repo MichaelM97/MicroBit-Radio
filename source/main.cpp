@@ -1,7 +1,7 @@
 /**
  * File: main.cpp
  * Author: Michael McCormick
- * Date: 03-04-2018
+ * Date: 06-04-2018
  * Desc: Basic pairing & transmission protocol for morse code sent across 2
  * microbits connected via the radio. Implements a basic encryption cypher.
  * Copyright: University of West of England 2018
@@ -57,16 +57,16 @@ MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_ALL);
 int main()
 {
     //Initialise the micro:bit runtime.
-    uBit.init();
-uBit.display.print(1);
+    uBit.init();        
+    uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
+    uBit.radio.enable();
+
     //Create instance of classes
     MorseClass* morse = new MorseClass();
-uBit.display.print(2);
-    //Initialise MicroBit radio
-    uBit.sleep(100);
 
-    uBit.sleep(100);
-uBit.display.print(3);
+    //Initialise MicroBit radio
+    uBit.sleep(50);
+
     //Variables
     bool buttonPressed = false, incomingSignal = false;
     uint64_t buttonTime, buttonDuration, buttonWaiting = 0,
@@ -81,9 +81,6 @@ uBit.display.print(3);
     while (paired == false) {
       //Listen for button press or radio data
       uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, pairingStart);
-      uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
-      uBit.radio.enable();
-uBit.display.print(4);
       uBit.sleep(100);
 
       /** HANDLE START PAIRING **/
@@ -97,6 +94,7 @@ uBit.display.print(4);
         //Send variables across radio, merge using global delimiter
         ManagedString randomNums = pairingDataString(newGroup, newFrequency);
         uBit.radio.datagram.send(randomNums);
+        uBit.sleep(100);
         pairingStarted = false;
 
         //Wait for confirmation
@@ -176,7 +174,7 @@ uBit.display.print(4);
           //Get morse code for new encrypted letter
           transmissionBuffer = morse->getMorse(letter);
           //Convert data to sendable type
-          char * data;
+          char data[transmissionBuffer.length() + 1];
           strcpy(data, transmissionBuffer.c_str());
           ManagedString dataString = data;
           //Send morse code
@@ -254,7 +252,6 @@ uBit.display.print(4);
 
 void pairingStart(MicroBitEvent pairStart) {
 	pairingStarted = true;
-  uBit.display.print("YH");
 }
 
 void onConfirm(MicroBitEvent confirmRecieved) {
@@ -268,6 +265,7 @@ void onFirstData(MicroBitEvent firstData) {
 //  try {
     //Store transmission in correct data type
     ManagedString recievedData = uBit.radio.datagram.recv();
+    uBit.display.print(recievedData);
     char * dataString = (char *)recievedData.toCharArray();
     char * temp;
     //Split incoming data, and store in variables

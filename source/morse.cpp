@@ -1,11 +1,12 @@
 /**
  * File: morse.cpp
  * Author: Michael McCormick
- * Date: 03-04-2018
+ * Date: 06-04-2018
  * Desc: Contains functions related to manipulating morse code data
  * Copyright: University of West of England 2018
  */
 
+#include "MicroBit.h"
 #include "morse.h"
 
 MorseClass::MorseClass() {

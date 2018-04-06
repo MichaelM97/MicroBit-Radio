@@ -6,10 +6,5 @@
   "arch": {
     "arm": {}
   },
-  "microbit-dal": {
-    "bluetooth": {
-      "enabled": 0
-    }
-  },
   "mbed": {}
 }

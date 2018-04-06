@@ -1,3 +1,0 @@
-Need to add prototypes for onConfirm and onFirstData functions 
-
-
