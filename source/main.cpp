@@ -24,12 +24,8 @@
 using namespace std;
 
 /* Function Prototypes */
-//Starts the pairing procedure
-void pairingStart(MicroBitEvent pairStart);
-//Checks if recieved data matches confirmation message
-void onConfirm(MicroBitEvent confirmRecieved);
-//Stores new pairing variables and sends confirmation message
-void onFirstData(MicroBitEvent firstData);
+//Handles all potential data incoming from the radio
+void onData(MicroBitEvent e);
 //Generates a random number between min - max
 int randomInt(int min, int max);
 //Returns the ManagedString containing the pairing data to be sent
@@ -37,9 +33,13 @@ ManagedString pairingDataString(int newGroup, int newFrequency);
 
 /* Global variables */
 //Flags used to track pairing status
-bool pairingStarted, paired;
+bool pairingStarted, paired, confirmWait, confirmed;
 //Variables used for pairing
 int newGroup, newFrequency;
+//Used to store incoming morse code
+string incomingMorse;
+//Flag used to indicate morse data has been recieved
+bool morseRecieved;
 
 //Used to access microbit
 MicroBit uBit;
@@ -50,9 +50,7 @@ MicroBitImage DASH_IMAGE("0,0,0,0,0\n0,0,0,0,0\n0,255,255,255,0\n0,0,0,0,0\n0,0,
 
 //Button events
 MicroBitButton buttonA(MICROBIT_PIN_BUTTON_A, MICROBIT_ID_BUTTON_A);
-
-//Pin events
-MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_ALL);
+MicroBitButton buttonB(MICROBIT_PIN_BUTTON_B, MICROBIT_ID_BUTTON_B);
 
 int main()
 {
@@ -63,49 +61,66 @@ int main()
     //Create instance of classes
     MorseClass* morse = new MorseClass();
 
-    //Initialise MicroBit radio
-    uBit.sleep(50);
-
-    //Variables
-    bool buttonPressed = false, incomingSignal = false;
-    uint64_t buttonTime, buttonDuration, buttonWaiting = 0,
-      signalTime, signalDuration, signalWaiting = 0;
+    //Variables used for morse transmissions
+    bool buttonPressed = false, morseSent = false;
+    uint64_t buttonTime = 0, buttonDuration = 0, buttonWaiting = 0;
     string transmissionBuffer;
     char letter;
+
     //Set flags
     paired = false;
     pairingStarted = false;
+    confirmWait = false;
+    confirmed = false;
+    morseRecieved = false;
 
     //Handle pairing procedure
-    while (paired == false) {
-      //Listen for button press or radio data
-      uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, pairingStart);
-      uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
+    while (1) {
+      uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onData);
+      //Wait for button input
+      if (buttonB.isPressed()) {
+        pairingStarted = true;
+      }
+
+      /** HANDLE USER CONFIRM **/
+      uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onData);
       uBit.sleep(100);
+      if (confirmed == true) {
+        //Send confirm message and update pairing status
+        uBit.radio.datagram.send(CONFIRM_MESSAGE);
+        paired = true;
+        pairingStarted = false;
+      }
 
       /** HANDLE START PAIRING **/
-      if (pairingStarted == true) {
+      else if (pairingStarted == true) {
         uBit.display.scroll("PAIRING");
 
         //Get new random variables
         newGroup = randomInt(0, 255);
+        uBit.sleep(100);
         newFrequency = randomInt(0, 100);
 
         //Send variables across radio, merge using global delimiter
         ManagedString randomNums = pairingDataString(newGroup, newFrequency);
         uBit.radio.datagram.send(randomNums);
         uBit.sleep(100);
-        pairingStarted = false;
 
         //Wait for confirmation
         uint64_t startedWaiting = uBit.systemTime();
+        confirmWait = true;
         while (1) {
-          uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onConfirm);
+          uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onData);
+          uBit.sleep(50);
           if (paired == true) {
             //Will continue to MorseCode handling
+            confirmWait = false;
+            pairingStarted = false;
             break;
           } else if ((uBit.systemTime() - startedWaiting) > 10000) {
-            uBit.display.scroll("ERROR"); //Will go back to listening for B press
+            uBit.display.scroll("X"); //Will go back to listening for B press
+            pairingStarted = false;
+            confirmWait = false;
             break;
           }
         }
@@ -113,19 +128,39 @@ int main()
 
       /** HANDLE COMPLETE PAIRING **/
       if (paired == true) {
+        //Set group and frequency
         uBit.radio.setGroup(newGroup);
         uBit.radio.setFrequencyBand(newFrequency);
+        //Update all flags
+        paired = true;
+        pairingStarted = false;
+        confirmWait = false;
+        confirmed = false;
+        morseRecieved = false;
+        buttonPressed = false;
+        morseSent = false;
+        //Display to user
         uBit.display.scroll("PAIRED");
+        /* Uncomment for testing
+        uBit.display.scroll(newGroup);
+        uBit.display.scroll(newFrequency);
+        */
+        break;
       }
-      uBit.sleep(100);
     }
 
-    //Main infinite loop
+    //Clears buffer
+    uBit.radio.datagram.send("");
+
+    //Main loop
     while (1) {
+      /**
+      ** HANDLE MORSE TRANSMISSION **
+      **/
       //Update button up time
+      uBit.sleep(50);
       buttonTime = uBit.systemTime();
 
-      /** HANDLE MORSE TRANSMISSION **/
       //Wait for button input
       while (buttonA.isPressed()) {
         buttonPressed = true;
@@ -178,6 +213,7 @@ int main()
           ManagedString dataString = data;
           //Send morse code
           uBit.radio.datagram.send(data);
+          morseSent = true; //Avoid printing own sent morse
           uBit.display.printAsync(">");
           uBit.sleep(700);
           uBit.display.clear();
@@ -191,45 +227,18 @@ int main()
         buttonWaiting = 0;
       }
 
-      /** HANDLE INCOMING MORSE **/
-      //Update signal up time
-      signalTime = uBit.systemTime();
+      /**
+      ** HANDLE INCOMING MORSE **
+      **/
+      //Listen for incoming radio signals
+      uBit.sleep(50);
+      uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onData);
+      uBit.sleep(50);
 
-      //Wait for signal from Pin 1
-      while (P1.getDigitalValue() == 1) {
-        incomingSignal = true;
-      }
-
-      //Get the incoming signal duration
-      signalDuration = uBit.systemTime() - signalTime;
-
-      //Process incoming signal
-      if (incomingSignal == true) {
-        //DOT input
-        if ((signalDuration > 100) && (signalDuration < 400)) {
-          transmissionBuffer += '.';
-        }
-        //DASH input
-        else if ((signalDuration > 400) && (signalDuration < 800)) {
-          transmissionBuffer += '-';
-        }
-        //NOISE
-        else if (signalDuration > 800) {
-          uBit.display.printAsync("!");
-          uBit.sleep(700);
-          uBit.display.clear();
-        }
-        //Reset variables to allow for new incoming signals
-        incomingSignal = false;
-        signalWaiting = uBit.systemTime();
-        //Update system up time
-        signalTime = uBit.systemTime();
-      }
-
-      //Incoming signal is finished if wait time met
-      if (((signalTime - signalWaiting) > 2000) && (signalWaiting != 0)) {
+      //If morse from another device is recieved
+      if (morseRecieved == true && morseSent == false) {
         //Get letter associated with morse signal
-        letter = morse->getLetter(transmissionBuffer);
+        letter = morse->getLetter(incomingMorse);
         if (letter != '?') { //Only if valid morse found
           //Decrypt letter with Caeser cipher
           letter = morse->decrypt(letter);
@@ -239,8 +248,11 @@ int main()
         uBit.sleep(700);
         uBit.display.clear();
         //Reset variables to allow for new transmissions
-        transmissionBuffer.clear();
-        signalWaiting = 0;
+        incomingMorse.clear();
+        morseRecieved = false;
+      } else if (morseRecieved == true && morseSent == true) {
+        //Avoids sent message being processed by device that sent it
+        morseSent = false;
       }
     }
 
@@ -249,30 +261,62 @@ int main()
     release_fiber();
 }
 
-void pairingStart(MicroBitEvent pairStart) {
-	pairingStarted = true;
-}
-
-void onConfirm(MicroBitEvent confirmRecieved) {
+void onData(MicroBitEvent e) {
+  //Store recieved data
   ManagedString recievedData = uBit.radio.datagram.recv();
-  if (recievedData == CONFIRM_MESSAGE) {
-    paired = true;
+
+  /** HANDLE EMPTY DATA **/
+  if (recievedData == "") {
+    //Do nothing
   }
-}
 
-void onFirstData(MicroBitEvent firstData) {
-  //Store transmission in correct data type
-  ManagedString recievedData = uBit.radio.datagram.recv();
-  char * dataString = (char *)recievedData.toCharArray();
-  char * temp;
-  //Split incoming data, and store in variables
-  temp = strtok(dataString,PAIR_DELIMITER);
-  newGroup = atoi(temp);
-  temp = strtok(dataString,PAIR_DELIMITER);
-  newFrequency = atoi(temp);
-  //Send confirm message and update pairing status
-  uBit.radio.datagram.send(CONFIRM_MESSAGE);
-  paired = true;
+  /** HANDLE CONFIRMATION MESSAGE **/
+  else if (confirmWait == true && paired == false) {
+    if (recievedData == CONFIRM_MESSAGE) {
+      paired = true;
+      confirmWait = false;
+    }
+  }
+
+  /** HANDLE POTENTIAL PAIRING DATA **/
+  else if (confirmWait == false && paired == false) {
+    //Wait for confirmation
+    uint64_t startedWaiting = uBit.systemTime();
+    while (1) {
+      uBit.display.printAsync("^");
+      //Wait for button input
+      if (buttonA.isPressed() && buttonB.isPressed()) {
+        uBit.display.clear();
+        //Store transmission in correct data type
+        char * dataString = (char *)recievedData.toCharArray();
+        char * temp;
+        //Split incoming data, and store in variables
+        temp = strtok(dataString,PAIR_DELIMITER);
+        newGroup = atoi(temp);
+        temp = strtok(NULL,PAIR_DELIMITER);
+        newFrequency = atoi(temp);
+        //Update flag
+        confirmed = true;
+        pairingStarted = false;
+        break;
+      //Dont pair if user doesnt confirm within 10 seconds
+      } else if ((uBit.systemTime() - startedWaiting) > 10000) {
+        uBit.display.print("X");
+        uBit.sleep(700);
+        uBit.display.clear();
+        pairingStarted = false;
+        break;
+      }
+    }
+  }
+
+  /** HANDLE INCOMING MORSE DATA **/
+  else if (paired == true) {
+    //Store transmission in correct data type
+    const char * data = recievedData.toCharArray();
+    incomingMorse = string(data);
+    morseRecieved = true; //Update flag
+  }
 }
 
 int randomInt(int min, int max) {
