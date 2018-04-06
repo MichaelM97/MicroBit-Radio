@@ -1,7 +1,7 @@
 /**
  * File: main.cpp
  * Author: Michael McCormick
- * Date: 03-04-2018
+ * Date: 06-04-2018
  * Desc: Basic pairing & transmission protocol for morse code sent across 2
  * microbits connected via the radio. Implements a basic encryption cypher.
  * Copyright: University of West of England 2018
@@ -12,15 +12,34 @@
 #include <stdio.h>
 #include <string>
 
+/* Global constants */
 //Timings used for distinguishing between dot/dash transmissions
 #define DOT_TIME 250
 #define DASH_TIME 500
+//Data that is sent/recieved to confirm pairing
+#define CONFIRM_MESSAGE "confirm"
+//Character used for splitting pairing data string
+#define PAIR_DELIMITER ","
 
 using namespace std;
 
-/* Sends the passed morse code transmission (not in morse class as there
-were issues with handling pin events) */
-void sendTransmission(string transmissionBuffer);
+/* Function Prototypes */
+//Starts the pairing procedure
+void pairingStart(MicroBitEvent pairStart);
+//Checks if recieved data matches confirmation message
+void onConfirm(MicroBitEvent confirmRecieved);
+//Stores new pairing variables and sends confirmation message
+void onFirstData(MicroBitEvent firstData);
+//Generates a random number between min - max
+int randomInt(int min, int max);
+//Returns the ManagedString containing the pairing data to be sent
+ManagedString pairingDataString(int newGroup, int newFrequency);
+
+/* Global variables */
+//Flags used to track pairing status
+bool pairingStarted, paired;
+//Variables used for pairing
+int newGroup, newFrequency;
 
 //Used to access microbit
 MicroBit uBit;
@@ -39,9 +58,13 @@ int main()
 {
     //Initialise the micro:bit runtime.
     uBit.init();
+    uBit.radio.enable();
 
-    //Create instance of class
+    //Create instance of classes
     MorseClass* morse = new MorseClass();
+
+    //Initialise MicroBit radio
+    uBit.sleep(50);
 
     //Variables
     bool buttonPressed = false, incomingSignal = false;
@@ -49,10 +72,56 @@ int main()
       signalTime, signalDuration, signalWaiting = 0;
     string transmissionBuffer;
     char letter;
+    //Set flags
+    paired = false;
+    pairingStarted = false;
+
+    //Handle pairing procedure
+    while (paired == false) {
+      //Listen for button press or radio data
+      uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, pairingStart);
+      uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onFirstData);
+      uBit.sleep(100);
+
+      /** HANDLE START PAIRING **/
+      if (pairingStarted == true) {
+        uBit.display.scroll("PAIRING");
+
+        //Get new random variables
+        newGroup = randomInt(0, 255);
+        newFrequency = randomInt(0, 100);
+
+        //Send variables across radio, merge using global delimiter
+        ManagedString randomNums = pairingDataString(newGroup, newFrequency);
+        uBit.radio.datagram.send(randomNums);
+        uBit.sleep(100);
+        pairingStarted = false;
+
+        //Wait for confirmation
+        uint64_t startedWaiting = uBit.systemTime();
+        while (1) {
+          uBit.messageBus.listen(MICROBIT_ID_RADIO, MICROBIT_RADIO_EVT_DATAGRAM, onConfirm);
+          if (paired == true) {
+            //Will continue to MorseCode handling
+            break;
+          } else if ((uBit.systemTime() - startedWaiting) > 10000) {
+            uBit.display.scroll("ERROR"); //Will go back to listening for B press
+            break;
+          }
+        }
+      }
+
+      /** HANDLE COMPLETE PAIRING **/
+      if (paired == true) {
+        uBit.radio.setGroup(newGroup);
+        uBit.radio.setFrequencyBand(newFrequency);
+        uBit.display.scroll("PAIRED");
+      }
+      uBit.sleep(100);
+    }
 
     //Main infinite loop
     while (1) {
-
       //Update button up time
       buttonTime = uBit.systemTime();
 
@@ -103,8 +172,12 @@ int main()
           letter = morse->encrypt(letter);
           //Get morse code for new encrypted letter
           transmissionBuffer = morse->getMorse(letter);
+          //Convert data to sendable type
+          char data[transmissionBuffer.length() + 1];
+          strcpy(data, transmissionBuffer.c_str());
+          ManagedString dataString = data;
           //Send morse code
-          sendTransmission(transmissionBuffer);
+          uBit.radio.datagram.send(data);
           uBit.display.printAsync(">");
           uBit.sleep(700);
           uBit.display.clear();
@@ -169,7 +242,6 @@ int main()
         transmissionBuffer.clear();
         signalWaiting = 0;
       }
-
     }
 
     //Delete class instances and go into power efficient sleep
@@ -177,22 +249,44 @@ int main()
     release_fiber();
 }
 
-void sendTransmission(string transmissionBuffer) {
-  //Store dots/dashes to be processed seperatley
-  int transmissionLength = transmissionBuffer.length();
-  char transmissionArray[transmissionLength + 1];
-  strcpy(transmissionArray, transmissionBuffer.c_str());
+void pairingStart(MicroBitEvent pairStart) {
+	pairingStarted = true;
+}
 
-  //Send morse code across wire attached to pin 1
-  for (int i = 0; i < transmissionLength; i++) {
-    if (transmissionArray[i] == '.') {
-      P1.setDigitalValue(1);
-      uBit.sleep(DOT_TIME);
-      P1.setDigitalValue(0);
-    } else if (transmissionArray[i] == '-') {
-      P1.setDigitalValue(1);
-      uBit.sleep(DASH_TIME);
-      P1.setDigitalValue(0);
-    }
+void onConfirm(MicroBitEvent confirmRecieved) {
+  ManagedString recievedData = uBit.radio.datagram.recv();
+  if (recievedData == CONFIRM_MESSAGE) {
+    paired = true;
   }
+}
+
+void onFirstData(MicroBitEvent firstData) {
+  //Store transmission in correct data type
+  ManagedString recievedData = uBit.radio.datagram.recv();
+  char * dataString = (char *)recievedData.toCharArray();
+  char * temp;
+  //Split incoming data, and store in variables
+  temp = strtok(dataString,PAIR_DELIMITER);
+  newGroup = atoi(temp);
+  temp = strtok(dataString,PAIR_DELIMITER);
+  newFrequency = atoi(temp);
+  //Send confirm message and update pairing status
+  uBit.radio.datagram.send(CONFIRM_MESSAGE);
+  paired = true;
+}
+
+int randomInt(int min, int max) {
+ srand(uBit.systemTime()); //Use current system up time as random seed
+ int returnVar = rand() % max + min; //Generate random number
+ return returnVar;
+}
+
+ManagedString pairingDataString(int newGroup, int newFrequency) {
+  //Convert variables to correct types
+  ManagedString newGroupStr = newGroup;
+  ManagedString newFrequencyStr = newFrequency;
+  ManagedString delimiterStr = PAIR_DELIMITER;
+  //Concatenate variables
+  ManagedString returnVar = newGroupStr + delimiterStr + newFrequencyStr + delimiterStr;
+  return returnVar;
 }

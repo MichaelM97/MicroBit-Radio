@@ -1,7 +1,11 @@
 {
-  "microbit-dal": {
-    "bluetooth": {
-      "enabled": 0
-    }
-  }
+
+    "microbit-dal": {
+
+        "bluetooth": {       "enabled": 0
+
+         }
+
+     }
+
 }

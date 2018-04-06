@@ -3,7 +3,7 @@
 // yotta config data (including backwards-compatible definitions)
 #define TARGET BBC_MICROBIT_CLASSIC_GCC
 #define TARGET_LIKE_BBC_MICROBIT_CLASSIC_GCC
-#define YOTTA_BUILD_INFO_HEADER "/home/student/IoT-Challenge2/build/bbc-microbit-classic-gcc/yotta_build_info.h"
+#define YOTTA_BUILD_INFO_HEADER "/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/yotta_build_info.h"
 #define TARGET_LIKE_BBC_MICROBIT_CLASSIC_GCC
 #define TARGET_LIKE_NRF51822
 #define TARGET_LIKE_NRF
@@ -22,6 +22,9 @@
 #define YOTTA_CFG_MINAR_ADDITIONAL_EVENT_POOLS_SIZE 100
 #define YOTTA_CFG_ARCH
 #define YOTTA_CFG_ARCH_ARM
+#define YOTTA_CFG_MICROBIT_DAL
+#define YOTTA_CFG_MICROBIT_DAL_BLUETOOTH
+#define YOTTA_CFG_MICROBIT_DAL_BLUETOOTH_ENABLED 0
 #define YOTTA_CFG_MBED
 
 // version definitions

@@ -1,4 +1,4 @@
-# Install script for directory: /home/student/IoT-Challenge2/yotta_modules/microbit-dal/source
+# Install script for directory: /home/student/IoT-Challenge3/yotta_modules/microbit-dal/source
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

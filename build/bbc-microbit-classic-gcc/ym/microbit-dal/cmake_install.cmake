@@ -1,4 +1,4 @@
-# Install script for directory: /home/student/IoT-Challenge2/build/bbc-microbit-classic-gcc/ym/microbit-dal
+# Install script for directory: /home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/ym/microbit-dal
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -29,11 +29,11 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/student/IoT-Challenge2/build/bbc-microbit-classic-gcc/ym/mbed-classic/cmake_install.cmake")
-  include("/home/student/IoT-Challenge2/build/bbc-microbit-classic-gcc/ym/ble/cmake_install.cmake")
-  include("/home/student/IoT-Challenge2/build/bbc-microbit-classic-gcc/ym/ble-nrf51822/cmake_install.cmake")
-  include("/home/student/IoT-Challenge2/build/bbc-microbit-classic-gcc/ym/nrf51-sdk/cmake_install.cmake")
-  include("/home/student/IoT-Challenge2/build/bbc-microbit-classic-gcc/ym/microbit-dal/source/cmake_install.cmake")
+  include("/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/ym/mbed-classic/cmake_install.cmake")
+  include("/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/ym/ble/cmake_install.cmake")
+  include("/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/ym/ble-nrf51822/cmake_install.cmake")
+  include("/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/ym/nrf51-sdk/cmake_install.cmake")
+  include("/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/ym/microbit-dal/source/cmake_install.cmake")
 
 endif()
 

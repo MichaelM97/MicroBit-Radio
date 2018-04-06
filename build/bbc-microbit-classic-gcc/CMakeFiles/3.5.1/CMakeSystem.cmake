@@ -1,9 +1,9 @@
-set(CMAKE_HOST_SYSTEM "Linux-4.13.0-26-generic")
+set(CMAKE_HOST_SYSTEM "Linux-4.13.0-38-generic")
 set(CMAKE_HOST_SYSTEM_NAME "Linux")
-set(CMAKE_HOST_SYSTEM_VERSION "4.13.0-26-generic")
+set(CMAKE_HOST_SYSTEM_VERSION "4.13.0-38-generic")
 set(CMAKE_HOST_SYSTEM_PROCESSOR "x86_64")
 
-include("/home/student/IoT-Challenge2/build/bbc-microbit-classic-gcc/toolchain.cmake")
+include("/home/student/IoT-Challenge3/build/bbc-microbit-classic-gcc/toolchain.cmake")
 
 set(CMAKE_SYSTEM "mbedOS-1")
 set(CMAKE_SYSTEM_NAME "mbedOS")
