@@ -39,7 +39,7 @@ cp build/bbc-microbit-classic-gcc/source/iot-example-combined.hex /media/[YOUR_U
 
 ### 2. Press the 'B' button on the first BBC MicroBit you wish to pair, the word "PAIRING" will begin to scroll across the LED matrix
 
-### 3. Any nearby MicroBit running this protocol will display a '^^' symbol, press both the 'A' **and** 'B' button simultaneously on the MicroBit you wish to pair with
+### 3. Any nearby MicroBit running this protocol will display a '\^' symbol, press both the 'A' **and** 'B' button simultaneously on the MicroBit you wish to pair with
 
 ### 4. Both MicroBits will scroll the word "PAIRED" across the LED matrix, and the pairing process will be completed
 ```
