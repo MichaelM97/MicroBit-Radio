@@ -42,7 +42,8 @@ cp build/bbc-microbit-classic-gcc/source/iot-example-combined.hex /media/[YOUR_U
 ### 3. Any nearby MicroBit running this protocol will display a '^' symbol, press both the 'A' **and** 'B' button simultaneously on the MicroBit you wish to pair with
 
 ### 4. Both MicroBits will scroll the word "PAIRED" across the LED matrix, and the pairing process will be completed
-```You may see an 'X' appear whilst attempting to pair your MicroBit:
+```
+You may see an 'X' appear whilst attempting to pair your MicroBit:
 if it scrolls - a MicroBit has not been found to pair with/no device was selected for pairing
 if it flashes - this MicroBit has not been selected for pairing
 ```
